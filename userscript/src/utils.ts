@@ -1,0 +1,58 @@
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import adapter from "axios-userscript-adapter";
+import { Discussion } from "./types";
+const PATH_RE =
+  /beatmapsets\/(?<setid>\d+)\/discussion\/(?:[-\d]+)\/(?<tab>.+)/;
+
+export function get<T = any, R = AxiosResponse<T>>(
+  url: string,
+  config?: Exclude<Partial<AxiosRequestConfig>, "adapter">
+): Promise<R> {
+  return axios.get(url, {
+    adapter,
+    ...config,
+  });
+}
+
+export function post<T = any, R = AxiosResponse<T>>(
+  url: string,
+  data?: any,
+  config?: Exclude<Partial<AxiosRequestConfig>, "adapter">
+): Promise<R> {
+  return axios.post(url, data, {
+    adapter,
+    ...config,
+  });
+}
+
+export function htmlToElement(html: string) {
+  var template = document.createElement("template");
+  html = html.trim(); // Never return a text node of whitespace as the result
+  template.innerHTML = html;
+  return template.content.firstElementChild;
+}
+
+export function isDiscussionPage() {
+  const result = PATH_RE.exec(window.location.href);
+  if (!result) return false;
+
+  const tab = result.groups.tab;
+  if (tab.startsWith("events") || tab.startsWith("reviews")) return false;
+  return true;
+}
+
+export function getAllDiscussions() {
+  return document.querySelectorAll<HTMLElement>(".beatmap-discussion");
+}
+
+export function findById(arr: Discussion[], id: number): Discussion {
+  for (const discussion of arr) {
+    if (discussion.id == id) return discussion;
+  }
+  return {
+    id: 0,
+    upvotes: 0,
+    downvotes: 0,
+    vote: 0,
+  };
+}

@@ -1,0 +1,48 @@
+datasource db {
+    // could be postgresql or mysql
+    provider = "sqlite"
+    url      = "file:dev.db"
+}
+
+generator db {
+    provider  = "prisma-client-py"
+    interface = "sync"
+}
+
+model User {
+    id            Int      @id
+    created_at    DateTime @default(now())
+    username      String
+    access_token  String
+    refresh_token String
+    expires_at    DateTime
+
+    Vote Vote[]
+    @@index([username])
+}
+
+model BeatmapSet {
+    id          Int          @id
+    discussions Discussion[]
+}
+
+model Discussion {
+    id              Int @id
+    upvotes_count   Int
+    downvotes_count Int
+
+    mapset    BeatmapSet @relation(fields: [mapset_id], references: [id])
+    mapset_id Int
+
+    votes Vote[]
+}
+
+model Vote {
+    id   Int @id @default(autoincrement())
+    vote Int
+
+    user          User       @relation(fields: [user_id], references: [id])
+    user_id       Int
+    discussion    Discussion @relation(fields: [discussion_id], references: [id])
+    discussion_id Int
+}
