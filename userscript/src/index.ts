@@ -72,10 +72,9 @@ function main() {
     if (state.shouldFetch) {
       [state.beatmapsetId, state.discussionsData] = await getDiscussionData();
       state.shouldFetch = false;
+      state.lastMapsetId = currentSetId;
+      drawVotes();
     }
-
-    state.lastMapsetId = currentSetId;
-    drawVotes();
   }, 1000);
 }
 
