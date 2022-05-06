@@ -50,12 +50,12 @@ export const ReplyVoteArea = (
     UpvoteButton(
       discussion.upvotes,
       discussion.vote == 1,
-      generateCallback(discussionId, beatmapsetId)
+      generateCallback(discussionId, beatmapsetId, discussion.vote == 1)
     ),
     DownvoteButton(
       discussion.downvotes,
       discussion.vote == -1,
-      generateCallback(discussionId, beatmapsetId)
+      generateCallback(discussionId, beatmapsetId, discussion.vote == -1)
     ),
   ];
   const element = htmlToElement(`

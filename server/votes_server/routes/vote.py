@@ -59,27 +59,33 @@ def vote(discussion_id: int):
     )
     if existing_vote:
         old_vote = existing_vote.vote
-        if old_vote != vote_data.vote:
-            db.vote.update(
-                data={
-                    "vote": vote_data.vote,
-                },
-                where={
-                    "id": existing_vote.id,
-                },
-            )
+        if old_vote == vote_data.vote:
+            return DiscussionResponse.from_prisma(discussion, vote_data.vote).json()
+
+        db.vote.update(
+            data={
+                "vote": vote_data.vote,
+            },
+            where={
+                "id": existing_vote.id,
+            },
+        )
+
+        update_data = {}
+        if old_vote != 0:
             decremented_field = "upvotes_count" if old_vote == 1 else "downvotes_count"
+            update_data[decremented_field] = {"decrement": 1}
+
+        if vote_data.vote != 0:
             incremeneted_field = (
                 "upvotes_count" if vote_data.vote == 1 else "downvotes_count"
             )
+            update_data[incremeneted_field] = {"increment": 1}
 
-            discussion = db.discussion.update(
-                data={
-                    incremeneted_field: {"increment": 1},
-                    decremented_field: {"decrement": 1},
-                },  # type: ignore
-                where={"id": discussion.id},
-            )
+        discussion = db.discussion.update(
+            data=update_data,  # type: ignore
+            where={"id": discussion.id},
+        )
 
     else:
         db.vote.create(

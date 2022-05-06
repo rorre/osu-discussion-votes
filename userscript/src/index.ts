@@ -19,7 +19,7 @@ function drawParentVotes(
   const downvoteElem = DownvoteButton(
     discussion.downvotes,
     discussion.vote == -1,
-    generateCallback(discussionId, state.beatmapsetId)
+    generateCallback(discussionId, state.beatmapsetId, discussion.vote == -1)
   );
   if (!element.dataset.voteInited) {
     actionsArea.children[1].insertAdjacentElement("afterend", downvoteElem);

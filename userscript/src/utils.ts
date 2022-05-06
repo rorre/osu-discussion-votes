@@ -79,14 +79,18 @@ export function findById(arr: Discussion[], id: number): Discussion {
   };
 }
 
-export function generateCallback(discussionId: number, beatmapsetId: number) {
+export function generateCallback(
+  discussionId: number,
+  beatmapsetId: number,
+  shouldRevert: boolean
+) {
   async function onVoteClick(score: number) {
     await post(
       API_URL + "/vote/" + discussionId,
       {
         discussion_id: discussionId,
         beatmapset_id: beatmapsetId,
-        vote: score,
+        vote: shouldRevert ? 0 : score,
       },
       {
         headers: {
