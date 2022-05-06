@@ -11,6 +11,7 @@ prisma = "^0.6.4"
 Flask-JWT-Extended = "^4.4.0"
 Authlib = "^1.0.1"
 requests = "^2.27.1"
+pydantic = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

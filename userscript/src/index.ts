@@ -3,28 +3,23 @@ import {
   isDiscussionPage,
   htmlToElement,
   findById,
+  getDiscussionData,
+  post,
+  generateCallback,
 } from "./utils";
-import { UpvoteButton, DownvoteButton, ReplyVoteArea } from "./elements";
+import { DownvoteButton, ReplyVoteArea } from "./elements";
 import { Discussion } from "./types";
 
-const mock: Discussion[] = [
-  {
-    id: 2183462,
-    upvotes: 0,
-    downvotes: 99,
-    vote: 0,
-  },
-  {
-    id: 6264481,
-    upvotes: 0,
-    downvotes: 39,
-    vote: -1,
-  },
-];
+var beatmapsetId: number;
+var discussionsData: Discussion[] = [];
 
-async function main() {
-  setInterval(() => {
+function main() {
+  setInterval(async () => {
+    console.log("hi?");
     if (!isDiscussionPage()) return;
+    console.log("hi!");
+    let tab;
+    [tab, beatmapsetId, discussionsData] = await getDiscussionData();
     const discussions = getAllDiscussions();
 
     discussions.forEach((element) => {
@@ -32,12 +27,16 @@ async function main() {
       element.dataset.voteInited = "true";
 
       const discussionId = Number(element.dataset.id);
-      const discussion = findById(mock, discussionId);
+      const discussion = findById(discussionsData, discussionId);
 
       const actionsArea = element.querySelector(".beatmap-discussion__actions");
       actionsArea.children[1].insertAdjacentElement(
         "afterend",
-        DownvoteButton(discussion.downvotes, discussion.vote == -1)
+        DownvoteButton(
+          discussion.downvotes,
+          discussion.vote == -1,
+          generateCallback(discussionId, beatmapsetId)
+        )
       );
 
       const replies = element.querySelectorAll<HTMLElement>(
@@ -45,14 +44,14 @@ async function main() {
       );
       replies.forEach((reply) => {
         const replyId = Number(reply.dataset.postId);
-        const replyDiscussion = findById(mock, replyId);
+        const replyDiscussion = findById(discussionsData, replyId);
 
-        reply.firstElementChild.appendChild(ReplyVoteArea(replyDiscussion));
+        reply.firstElementChild.appendChild(
+          ReplyVoteArea(replyDiscussion, replyId, beatmapsetId)
+        );
       });
     });
   }, 1000);
 }
 
-main().catch((e) => {
-  console.log(e);
-});
+main();

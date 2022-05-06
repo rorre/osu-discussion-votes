@@ -1,8 +1,12 @@
 import { Discussion } from "./types";
-import { htmlToElement } from "./utils";
+import { generateCallback, htmlToElement } from "./utils";
 
-export const DownvoteButton = (count: number, enabled: boolean) =>
-  htmlToElement(`
+export const DownvoteButton = (
+  count: number,
+  enabled: boolean,
+  onClick: (score: number) => void
+) => {
+  const element = htmlToElement(`
     <div class="beatmap-discussion__action">
       <button class="beatmap-discussion-vote beatmap-discussion-vote--down ${
         !enabled && "beatmap-discussion-vote--inactive"
@@ -11,10 +15,18 @@ export const DownvoteButton = (count: number, enabled: boolean) =>
         <span class="beatmap-discussion-vote__count">${count}</span>
       </button>
     </div>
-`);
+  `);
+  element.addEventListener("click", () => onClick(-1));
 
-export const UpvoteButton = (count: number, enabled: boolean) =>
-  htmlToElement(`
+  return element;
+};
+
+export const UpvoteButton = (
+  count: number,
+  enabled: boolean,
+  onClick: (score: number) => void
+) => {
+  const element = htmlToElement(`
     <div class="beatmap-discussion__action">
       <button class="beatmap-discussion-vote beatmap-discussion-vote--up ${
         !enabled && "beatmap-discussion-vote--inactive"
@@ -23,12 +35,28 @@ export const UpvoteButton = (count: number, enabled: boolean) =>
         <span class="beatmap-discussion-vote__count">${count}</span>
       </button>
     </div>
-`);
+  `);
+  element.addEventListener("click", () => onClick(1));
 
-export const ReplyVoteArea = (discussion: Discussion) => {
+  return element;
+};
+
+export const ReplyVoteArea = (
+  discussion: Discussion,
+  discussionId: number,
+  beatmapsetId: number
+) => {
   const childrens = [
-    UpvoteButton(discussion.upvotes, discussion.vote == 1),
-    DownvoteButton(discussion.downvotes, discussion.vote == -1),
+    UpvoteButton(
+      discussion.upvotes,
+      discussion.vote == 1,
+      generateCallback(discussionId, beatmapsetId)
+    ),
+    DownvoteButton(
+      discussion.downvotes,
+      discussion.vote == -1,
+      generateCallback(discussionId, beatmapsetId)
+    ),
   ];
   const element = htmlToElement(`
     <div class="beatmap-discussion__top-actions">

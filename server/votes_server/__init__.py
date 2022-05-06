@@ -12,9 +12,10 @@ def create_app(config_file="config.json"):
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config.from_mapping(data)
 
-    from votes_server.routes import auth
+    from votes_server.routes import auth, vote
 
     app.register_blueprint(auth.blueprint)
+    app.register_blueprint(vote.blueprint)
 
     from votes_server.plugins import oauth, db, jwt
 

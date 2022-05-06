@@ -19,7 +19,9 @@ module.exports = {
     'GM.xmlHttpRequest'
   ],
   connect: [
-    'httpbin.org'
+    'httpbin.org',
+    '127.0.0.1',
+    '127.0.0.1:5000'
   ],
   'run-at': 'document-end'
 }
