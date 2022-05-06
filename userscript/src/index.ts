@@ -66,13 +66,16 @@ function main() {
   setInterval(async () => {
     if (!isDiscussionPage()) return;
 
+    let currentUrl = window.location.href;
     let currentSetId = getBeatmapSetId();
     if (currentSetId != state.lastMapsetId) state.shouldFetch = true;
+    if (currentUrl != state.lastUrl) state.shouldFetch = true;
 
     if (state.shouldFetch) {
       [state.beatmapsetId, state.discussionsData] = await getDiscussionData();
       state.shouldFetch = false;
       state.lastMapsetId = currentSetId;
+      state.lastUrl = currentUrl;
       drawVotes();
     }
   }, 1000);

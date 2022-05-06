@@ -4,7 +4,7 @@ import { API_URL, JWT_KEY } from "./constants";
 import { state } from "./state";
 import { Discussion } from "./types";
 const PATH_RE =
-  /beatmapsets\/(?<setid>\d+)\/discussion\/(?:[-\d]+)\/(?<tab>.+)/;
+  /beatmapsets\/(?<setid>\d+)\/discussion(?:\/(?:[-\d]+)\/(?<tab>.+))?/;
 
 export function get<T = any, R = AxiosResponse<T>>(
   url: string,
@@ -58,7 +58,7 @@ export function isDiscussionPage() {
   const result = PATH_RE.exec(window.location.href);
   if (!result) return false;
 
-  const tab = result.groups.tab;
+  const tab = result.groups.tab ?? "generalAll";
   if (tab.startsWith("events") || tab.startsWith("reviews")) return false;
   return true;
 }
