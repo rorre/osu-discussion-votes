@@ -8,11 +8,7 @@ import {
 } from "./utils";
 import { DownvoteButton, ReplyVoteArea } from "./elements";
 import { Discussion } from "./types";
-
-var beatmapsetId: number;
-var discussionsData: Discussion[] = [];
-var lastMapsetId: number;
-var shouldFetch = true;
+import { state } from "./state";
 
 function drawParentVotes(
   element: HTMLElement,
@@ -23,7 +19,7 @@ function drawParentVotes(
   const downvoteElem = DownvoteButton(
     discussion.downvotes,
     discussion.vote == -1,
-    generateCallback(discussionId, beatmapsetId)
+    generateCallback(discussionId, state.beatmapsetId)
   );
   if (!element.dataset.voteInited) {
     actionsArea.children[1].insertAdjacentElement("afterend", downvoteElem);
@@ -38,9 +34,13 @@ function drawRepliesVotes(element: HTMLElement) {
   );
   replies.forEach((reply) => {
     const replyId = Number(reply.dataset.postId);
-    const replyDiscussion = findById(discussionsData, replyId);
+    const replyDiscussion = findById(state.discussionsData, replyId);
 
-    const replyElem = ReplyVoteArea(replyDiscussion, replyId, beatmapsetId);
+    const replyElem = ReplyVoteArea(
+      replyDiscussion,
+      replyId,
+      state.beatmapsetId
+    );
     if (!element.dataset.voteInited) {
       reply.firstElementChild.appendChild(replyElem);
     } else {
@@ -53,7 +53,7 @@ function drawVotes() {
   const discussions = getAllDiscussions();
   discussions.forEach((element) => {
     const discussionId = Number(element.dataset.id);
-    const discussion = findById(discussionsData, discussionId);
+    const discussion = findById(state.discussionsData, discussionId);
 
     drawParentVotes(element, discussion, discussionId);
     drawRepliesVotes(element);
@@ -67,13 +67,14 @@ function main() {
     if (!isDiscussionPage()) return;
 
     let currentSetId = getBeatmapSetId();
-    if (currentSetId != lastMapsetId) shouldFetch = true;
+    if (currentSetId != state.lastMapsetId) state.shouldFetch = true;
 
-    if (shouldFetch) {
-      [beatmapsetId, discussionsData] = await getDiscussionData();
-      shouldFetch = false;
+    if (state.shouldFetch) {
+      [state.beatmapsetId, state.discussionsData] = await getDiscussionData();
+      state.shouldFetch = false;
     }
 
+    state.lastMapsetId = currentSetId;
     drawVotes();
   }, 1000);
 }

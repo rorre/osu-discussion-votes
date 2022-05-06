@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import adapter from "axios-userscript-adapter";
 import { API_URL, JWT_KEY } from "./constants";
+import { state } from "./state";
 import { Discussion } from "./types";
 const PATH_RE =
   /beatmapsets\/(?<setid>\d+)\/discussion\/(?:[-\d]+)\/(?<tab>.+)/;
@@ -93,6 +94,7 @@ export function generateCallback(discussionId: number, beatmapsetId: number) {
         },
       }
     );
+    state.shouldFetch = true;
   }
 
   return onVoteClick;
