@@ -33,18 +33,24 @@ export function htmlToElement(html: string) {
   return template.content.firstElementChild;
 }
 
-export async function getDiscussionData(): Promise<[string, number, any]> {
+export async function getDiscussionData(): Promise<[number, Discussion[]]> {
   const result = PATH_RE.exec(window.location.href);
   if (!result) return undefined;
 
-  const tab = result.groups.tab.split("#")[0];
   const beatmapsetId = Number(result.groups.setid);
   const res = await get(API_URL + "/vote/mapset/" + beatmapsetId, {
     headers: {
       Authorization: "Bearer " + JWT_KEY,
     },
   });
-  return [tab, beatmapsetId, res.data.discussions];
+  return [beatmapsetId, res.data.discussions];
+}
+
+export function getBeatmapSetId() {
+  const result = PATH_RE.exec(window.location.href);
+  if (!result) return undefined;
+
+  return Number(result.groups.setid);
 }
 
 export function isDiscussionPage() {
