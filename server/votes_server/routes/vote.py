@@ -1,35 +1,33 @@
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, request
 from flask_jwt_extended import current_user, jwt_required
-import requests
+from votes_server.models import Discussion, User
+from votes_server.models.vote import Vote
 from votes_server.plugins import db
-from urllib.parse import urlencode
-from typing import Optional, cast
-from prisma.models import User
+from typing import cast
 from votes_server.types import DiscussionResponse, VoteRequest
-from prisma.types import BeatmapSetInclude
 
 blueprint = Blueprint("vote", __name__, url_prefix="/vote")
 
 
-def get_or_create_beatmapset(
-    beatmapset_id: int, include: Optional[BeatmapSetInclude] = None
-):
-    beatmapset = db.beatmapset.find_unique(where={"id": beatmapset_id}, include=include)
-    if beatmapset:
-        return beatmapset
+# def get_or_create_beatmapset(
+#     beatmapset_id: int, include: Optional[BeatmapSetInclude] = None
+# ):
+#     beatmapset = db.beatmapset.find_unique(where={"id": beatmapset_id}, include=include)
+#     if beatmapset:
+#         return beatmapset
 
-    params = {
-        "k": current_app.config["OSU_API_KEY"],
-        "s": beatmapset_id,
-    }
+#     params = {
+#         "k": current_app.config["OSU_API_KEY"],
+#         "s": beatmapset_id,
+#     }
 
-    response = requests.get("https://osu.ppy.sh/api/get_beatmaps?" + urlencode(params))
-    response.raise_for_status()
-    if len(response.json()) == 0:
-        raise Exception("Invalid map")
+#     response = requests.get("https://osu.ppy.sh/api/get_beatmaps?" + urlencode(params))
+#     response.raise_for_status()
+#     if len(response.json()) == 0:
+#         raise Exception("Invalid map")
 
-    beatmapset = db.beatmapset.create(data={"id": beatmapset_id}, include=include)
-    return beatmapset
+#     beatmapset = db.beatmapset.create(data={"id": beatmapset_id}, include=include)
+#     return beatmapset
 
 
 @blueprint.post("/<int:discussion_id>")
@@ -38,71 +36,60 @@ def vote(discussion_id: int):
     vote_data = VoteRequest(**request.json)
     user = cast(User, current_user)
 
-    discussion = db.discussion.find_unique(where={"id": discussion_id})
+    discussion: Discussion = Discussion.query.with_for_update().get(discussion_id)  # type: ignore
     if not discussion:
-        beatmapset = get_or_create_beatmapset(vote_data.beatmapset_id)
         # TODO: Ensure discussion actually exists in that map
-        discussion = db.discussion.create(
-            data={
-                "id": discussion_id,
-                "upvotes_count": 0,
-                "downvotes_count": 0,
-                "mapset": {"connect": {"id": beatmapset.id}},
-            }
-        )
+        discussion = Discussion(
+            id=discussion_id,
+            upvotes=0,
+            downvotes=0,
+            mapset_id=vote_data.beatmapset_id,
+        )  # type: ignore
 
-    existing_vote = db.vote.find_first(
-        where={
-            "user": {"is": {"id": user.id}},
-            "discussion": {"is": {"id": discussion_id}},
-        }
-    )
-    if existing_vote:
-        old_vote = existing_vote.vote
+    user_vote: Vote = Vote.query.filter_by(
+        user_id=user.osu_uid,
+        discussion_id=discussion_id,
+    ).first()  # type: ignore
+    if user_vote:
+        old_vote = user_vote.vote
         if old_vote == vote_data.vote:
-            return DiscussionResponse.from_prisma(discussion, vote_data.vote).json()
+            return DiscussionResponse.from_obj(discussion, vote_data.vote).json()
 
-        db.vote.update(
-            data={
-                "vote": vote_data.vote,
-            },
-            where={
-                "id": existing_vote.id,
-            },
-        )
+        user_vote.vote = vote_data.vote
 
-        update_data = {}
         if old_vote != 0:
-            decremented_field = "upvotes_count" if old_vote == 1 else "downvotes_count"
-            update_data[decremented_field] = {"decrement": 1}
+            decremented_field = "upvotes" if old_vote == 1 else "downvotes"
+            # existing_vote.decremented_field = Vote.decremented_field - 1
+            setattr(
+                discussion,
+                decremented_field,
+                getattr(discussion, decremented_field) - 1,
+            )
 
         if vote_data.vote != 0:
-            incremeneted_field = (
-                "upvotes_count" if vote_data.vote == 1 else "downvotes_count"
+            incremeneted_field = "upvotes" if vote_data.vote == 1 else "downvotes"
+            # existing_vote.incremeneted_field = Vote.incremeneted_field + 1
+            setattr(
+                discussion,
+                incremeneted_field,
+                getattr(discussion, incremeneted_field) + 1,
             )
-            update_data[incremeneted_field] = {"increment": 1}
-
-        discussion = db.discussion.update(
-            data=update_data,  # type: ignore
-            where={"id": discussion.id},
-        )
-
     else:
-        db.vote.create(
-            data={
-                "vote": vote_data.vote,
-                "user": {"connect": {"id": user.id}},
-                "discussion": {"connect": {"id": discussion.id}},
-            }
-        )
-        target_field = "upvotes_count" if vote_data.vote == 1 else "downvotes_count"
-        discussion = db.discussion.update(
-            data={target_field: {"increment": 1}},  # type: ignore
-            where={"id": discussion.id},
+        user_vote = Vote(vote=vote_data.vote, user=user, discussion=discussion)
+
+        incremeneted_field = "upvotes" if vote_data.vote == 1 else "downvotes"
+        # existing_vote.incremeneted_field = Vote.incremeneted_field + 1
+        setattr(
+            discussion,
+            incremeneted_field,
+            getattr(discussion, incremeneted_field) + 1,
         )
 
-    assert discussion is not None
-    return DiscussionResponse.from_prisma(discussion, vote_data.vote).json()
+    db.session.add(user_vote)
+    db.session.add(discussion)
+    db.session.commit()
+
+    return DiscussionResponse.from_obj(discussion, vote_data.vote).dict()
 
 
 @blueprint.get("/mapset/<int:mapset_id>")
@@ -110,22 +97,17 @@ def vote(discussion_id: int):
 def view(mapset_id: int):
     user = cast(User, current_user)
 
-    mapset = get_or_create_beatmapset(mapset_id, include={"discussions": True})
-    assert mapset.discussions is not None
-
-    discussions = []
-    for discussion in mapset.discussions:
-        existing_vote = db.vote.find_first(
-            where={
-                "user_id": user.id,
-                "discussion_id": discussion.id,
-            }
-        )
-        discussions.append(
-            DiscussionResponse.from_prisma(
+    result_js = []
+    discussions = Discussion.query.filter_by(mapset_id=mapset_id).all()
+    for discussion in discussions:
+        existing_vote = Vote.query.filter_by(
+            user_id=user.osu_uid, discussion_id=discussion.id
+        ).first()
+        result_js.append(
+            DiscussionResponse.from_obj(
                 discussion,
                 existing_vote.vote if existing_vote else 0,  # type: ignore
             ).dict()
         )
 
-    return {"id": mapset.id, "discussions": discussions}
+    return {"id": mapset_id, "discussions": result_js}

@@ -1,5 +1,3 @@
-from typing import cast
-from prisma.models import User
 from flask import Flask
 import json
 
@@ -19,13 +17,14 @@ def create_app(config_file="config.json"):
 
     from votes_server.plugins import oauth, db, jwt
 
+    db.init_app(app)
     jwt.init_app(app)
     oauth.init_app(app)
     init_oauth(app, oauth)
 
     @app.before_first_request
     def init_db():
-        db.connect()
+        db.create_all()
 
     return app
 
@@ -33,31 +32,17 @@ def create_app(config_file="config.json"):
 def fetch_token(name):
     from flask_jwt_extended import current_user
 
-    user = cast(User, current_user)
-    return dict(
-        access_token=user.access_token,
-        token_type="Bearer",
-        refresh_token=user.refresh_token,
-        expires_at=user.expires_at,
-    )
+    return current_user.to_token()
 
 
 def update_token(name, token, refresh_token=None, access_token=None):
     from flask_jwt_extended import current_user
-
     from votes_server.plugins import db
 
-    user = cast(User, current_user)
-    db.user.update(
-        where={
-            "id": user.id,
-        },
-        data={
-            "access_token": token["access_token"],
-            "refresh_token": token.get("refresh_token"),
-            "expires_at": token["expires_at"],
-        },
-    )
+    current_user.access_token = token["access_token"]
+    current_user.refresh_token = token.get("refresh_token")
+    current_user.expires_at = token["expires_at"]
+    db.session.commit()
 
 
 def init_oauth(app, oauth):
@@ -72,3 +57,4 @@ def init_oauth(app, oauth):
             scope="identify",
         ),
     )
+    oauth.init_app(app, fetch_token=fetch_token)

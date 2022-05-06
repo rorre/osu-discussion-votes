@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Literal
-from prisma.models import Discussion
+
+from votes_server.models.vote import Discussion
 
 
 class VoteRequest(BaseModel):
@@ -16,10 +17,10 @@ class DiscussionResponse(BaseModel):
     vote: Literal[-1, 0, 1]
 
     @classmethod
-    def from_prisma(cls, obj: Discussion, vote: Literal[-1, 0, 1]):
+    def from_obj(cls, obj: Discussion, vote: Literal[-1, 0, 1]):
         return cls(
             id=obj.id,
-            upvotes=obj.upvotes_count,
-            downvotes=obj.downvotes_count,
+            upvotes=obj.upvotes,
+            downvotes=obj.downvotes,
             vote=vote,
         )

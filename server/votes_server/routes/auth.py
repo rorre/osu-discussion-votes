@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, url_for
 from flask_jwt_extended import current_user, create_access_token
+from votes_server.models.user import User
 from votes_server.plugins import db, oauth
-from datetime import datetime
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -25,19 +25,17 @@ def authorize():
     resp = oauth.osu.get("me", token=token)
     profile = resp.json()
 
-    update_data = dict(
-        username=profile["username"],
-        access_token=token["access_token"],
-        refresh_token=token.get("refresh_token"),
-        expires_at=datetime.fromtimestamp(token["expires_in"]),
-    )
-
     uid = profile["id"]
-    this_user = db.user.find_unique(where={"id": uid})
+    this_user = User.query.filter_by(osu_uid=uid).first()
     if this_user is None:
-        this_user = db.user.create(data={"id": uid, **update_data})
-    else:
-        db.user.update(data=update_data, where={"id": uid})
+        this_user = User(osu_uid=uid)
+    this_user.username = profile["username"]
+    this_user.access_token = token["access_token"]
+    this_user.refresh_token = token.get("refresh_token")
+    this_user.expires_at = token["expires_in"]
+
+    db.session.add(this_user)
+    db.session.commit()
 
     access_token = create_access_token(identity=this_user)
     return jsonify(access_token=access_token)
