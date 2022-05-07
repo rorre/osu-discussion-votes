@@ -1,10 +1,11 @@
+import itertools
 from flask import Blueprint, request
 from flask_jwt_extended import current_user, jwt_required
-from votes_server.models import Discussion, User
+from votes_server.models import User
 from votes_server.models.vote import Vote
 from votes_server.plugins import db
 from typing import cast
-from votes_server.types import DiscussionResponse, VoteRequest
+from votes_server.types import DiscussionResponse, VoteRequest, VoteResponse
 
 blueprint = Blueprint("vote", __name__, url_prefix="/vote")
 
@@ -36,60 +37,24 @@ def vote(discussion_id: int):
     vote_data = VoteRequest(**request.json)
     user = cast(User, current_user)
 
-    discussion: Discussion = Discussion.query.with_for_update().get(discussion_id)  # type: ignore
-    if not discussion:
-        # TODO: Ensure discussion actually exists in that map
-        discussion = Discussion(
-            id=discussion_id,
-            upvotes=0,
-            downvotes=0,
-            mapset_id=vote_data.beatmapset_id,
-        )  # type: ignore
-
     user_vote: Vote = Vote.query.filter_by(
         user_id=user.osu_uid,
         discussion_id=discussion_id,
+        mapset_id=vote_data.beatmapset_id,
     ).first()  # type: ignore
     if user_vote:
-        old_vote = user_vote.vote
-        if old_vote == vote_data.vote:
-            return DiscussionResponse.from_obj(discussion, vote_data.vote).json()
-
         user_vote.vote = vote_data.vote
-
-        if old_vote != 0:
-            decremented_field = "upvotes" if old_vote == 1 else "downvotes"
-            # existing_vote.decremented_field = Vote.decremented_field - 1
-            setattr(
-                discussion,
-                decremented_field,
-                getattr(discussion, decremented_field) - 1,
-            )
-
-        if vote_data.vote != 0:
-            incremeneted_field = "upvotes" if vote_data.vote == 1 else "downvotes"
-            # existing_vote.incremeneted_field = Vote.incremeneted_field + 1
-            setattr(
-                discussion,
-                incremeneted_field,
-                getattr(discussion, incremeneted_field) + 1,
-            )
     else:
-        user_vote = Vote(vote=vote_data.vote, user=user, discussion=discussion)
-
-        incremeneted_field = "upvotes" if vote_data.vote == 1 else "downvotes"
-        # existing_vote.incremeneted_field = Vote.incremeneted_field + 1
-        setattr(
-            discussion,
-            incremeneted_field,
-            getattr(discussion, incremeneted_field) + 1,
+        user_vote = Vote(
+            vote=vote_data.vote,
+            user=user,
+            discussion_id=discussion_id,
+            mapset_id=vote_data.beatmapset_id,
         )
+        db.session.add(user_vote)
 
-    db.session.add(user_vote)
-    db.session.add(discussion)
     db.session.commit()
-
-    return DiscussionResponse.from_obj(discussion, vote_data.vote).dict()
+    return VoteResponse.from_orm(user_vote).dict()
 
 
 @blueprint.get("/mapset/<int:mapset_id>")
@@ -98,15 +63,25 @@ def view(mapset_id: int):
     user = cast(User, current_user)
 
     result_js = []
-    discussions = Discussion.query.filter_by(mapset_id=mapset_id).all()
-    for discussion in discussions:
-        existing_vote = Vote.query.filter_by(
-            user_id=user.osu_uid, discussion_id=discussion.id
-        ).first()
+    votes = Vote.query.filter_by(mapset_id=mapset_id).all()
+    for discussion_id, discussion_votes in itertools.groupby(
+        votes, key=lambda x: x.discussion_id
+    ):
+        upvotes = 0
+        downvotes = 0
+        user_vote = 0
+        for vote in discussion_votes:
+            if vote.vote == 1:
+                upvotes += 1
+            elif vote.vote == -1:
+                downvotes += 1
+
+            if vote.user_id == user.osu_uid:
+                user_vote = vote.vote
+
         result_js.append(
-            DiscussionResponse.from_obj(
-                discussion,
-                existing_vote.vote if existing_vote else 0,  # type: ignore
+            DiscussionResponse(
+                id=discussion_id, upvotes=upvotes, downvotes=downvotes, vote=user_vote
             ).dict()
         )
 

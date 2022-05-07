@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 from typing import Literal
 
-from votes_server.models.vote import Discussion
-
 
 class VoteRequest(BaseModel):
     discussion_id: int
     beatmapset_id: int
     vote: Literal[-1, 0, 1]
+
+    class Config:
+        orm_mode = True
 
 
 class DiscussionResponse(BaseModel):
@@ -16,11 +17,17 @@ class DiscussionResponse(BaseModel):
     downvotes: int
     vote: Literal[-1, 0, 1]
 
-    @classmethod
-    def from_obj(cls, obj: Discussion, vote: Literal[-1, 0, 1]):
-        return cls(
-            id=obj.id,
-            upvotes=obj.upvotes,
-            downvotes=obj.downvotes,
-            vote=vote,
-        )
+    class Config:
+        orm_mode = True
+
+
+class VoteResponse(BaseModel):
+    id: int
+    vote: int
+    mapset_id: int
+    discussion_id: int
+    user_id: int
+    discussion_id: int
+
+    class Config:
+        orm_mode = True
