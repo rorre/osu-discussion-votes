@@ -37,11 +37,15 @@ def vote(discussion_id: int):
     vote_data = VoteRequest(**request.json)
     user = cast(User, current_user)
 
-    user_vote: Vote = Vote.query.filter_by(
-        user_id=user.osu_uid,
-        discussion_id=discussion_id,
-        mapset_id=vote_data.beatmapset_id,
-    ).first()  # type: ignore
+    user_vote: Vote = (
+        Vote.query.with_for_update()
+        .filter_by(
+            user_id=user.osu_uid,
+            discussion_id=discussion_id,
+            mapset_id=vote_data.beatmapset_id,
+        )
+        .first()
+    )  # type: ignore
     if user_vote:
         user_vote.vote = vote_data.vote
     else:
