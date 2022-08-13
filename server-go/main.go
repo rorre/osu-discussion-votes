@@ -19,6 +19,7 @@ func main() {
 	store := gormsessions.NewStore(models.DB, true, []byte("secret"))
 
 	r := gin.Default()
+	r.SetTrustedProxies(nil)
 	r.Use(sessions.Sessions("authsession", store))
 
 	r.GET("/", func(c *gin.Context) {
