@@ -63,6 +63,8 @@ function drawVotes() {
 }
 
 function main() {
+  let lastDiscussionCount = 0;
+
   setInterval(async () => {
     if (!isDiscussionPage()) return;
 
@@ -71,13 +73,15 @@ function main() {
     if (currentSetId != state.lastMapsetId) state.shouldFetch = true;
     if (currentUrl != state.lastUrl) state.shouldFetch = true;
 
-    if (state.shouldFetch) {
+    let currentDiscussionCount = getAllDiscussions().length;
+    if (state.shouldFetch || lastDiscussionCount !== currentDiscussionCount) {
       [state.beatmapsetId, state.discussionsData] = await getDiscussionData();
       state.shouldFetch = false;
       state.lastMapsetId = currentSetId;
       state.lastUrl = currentUrl;
       drawVotes();
     }
+    lastDiscussionCount = currentDiscussionCount;
   }, 100);
 }
 
