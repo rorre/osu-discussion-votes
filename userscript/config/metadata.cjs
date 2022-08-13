@@ -12,13 +12,13 @@ module.exports = {
   author: author,
   source: repository.url,
   // 'license': 'MIT',
-  match: ["https://osu.ppy.sh/*"],
+  match: ["https://osu.ppy.sh/*", "https://votes.rorre.xyz/"],
   require: [
     `https://cdn.jsdelivr.net/npm/jquery@${dependencies.jquery}/dist/jquery.min.js`,
     `https://cdn.jsdelivr.net/npm/axios@${dependencies.axios}/dist/axios.min.js`,
     `https://cdn.jsdelivr.net/npm/axios-userscript-adapter@${dependencies["axios-userscript-adapter"]}/dist/axiosGmxhrAdapter.min.js`,
   ],
   grant: ["GM.xmlHttpRequest", "GM.setValue", "GM.getValue"],
-  connect: ["httpbin.org", "127.0.0.1", "127.0.0.1:5000"],
+  connect: ["127.0.0.1", "127.0.0.1:5000", "votes.rorre.xyz"],
   "run-at": "document-end",
 };
