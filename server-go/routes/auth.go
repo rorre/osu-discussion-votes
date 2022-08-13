@@ -72,7 +72,28 @@ func RedirectAuth(c *gin.Context) {
 	session := sessions.Default(c)
 	v := session.Get("user_id")
 	if v != nil {
-		c.Redirect(http.StatusFound, "/")
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, `
+		<script>
+		function getCookie(cname) {
+			let name = cname + "=";
+			let decodedCookie = decodeURIComponent(document.cookie);
+			let ca = decodedCookie.split(';');
+			for(let i = 0; i <ca.length; i++) {
+			  let c = ca[i];
+			  while (c.charAt(0) == ' ') {
+				c = c.substring(1);
+			  }
+			  if (c.indexOf(name) == 0) {
+				return c.substring(name.length, c.length);
+			  }
+			}
+			return "";
+		}
+		setTimeout(() => window.setCookie(getCookie("authsession")), 1000)
+		</script>
+		You may close this window after the pop up.
+		`)
 		return
 	}
 
@@ -92,7 +113,7 @@ func Authorize(c *gin.Context) {
 	session := sessions.Default(c)
 	v := session.Get("user_id")
 	if v != nil {
-		c.Redirect(http.StatusFound, "/")
+		c.Redirect(http.StatusFound, "/auth")
 		return
 	}
 
@@ -144,5 +165,5 @@ func Authorize(c *gin.Context) {
 
 	session.Set("user_id", user.ID)
 	session.Save()
-	c.Redirect(http.StatusFound, "/")
+	c.Redirect(http.StatusFound, "/auth")
 }

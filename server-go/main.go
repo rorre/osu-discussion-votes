@@ -23,28 +23,7 @@ func main() {
 	r.Use(sessions.Sessions("authsession", store))
 
 	r.GET("/", func(c *gin.Context) {
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, `
-		<script>
-		function getCookie(cname) {
-			let name = cname + "=";
-			let decodedCookie = decodeURIComponent(document.cookie);
-			let ca = decodedCookie.split(';');
-			for(let i = 0; i <ca.length; i++) {
-			  let c = ca[i];
-			  while (c.charAt(0) == ' ') {
-				c = c.substring(1);
-			  }
-			  if (c.indexOf(name) == 0) {
-				return c.substring(name.length, c.length);
-			  }
-			}
-			return "";
-		}
-		setTimeout(() => window.setCookie(getCookie("authsession")), 1000)
-		</script>
-		You may close this window after the pop up.
-		`)
+		c.Redirect(http.StatusFound, "https://github.com/rorre/osu-discussion-votes")
 	})
 
 	auth := r.Group("/auth")
