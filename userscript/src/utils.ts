@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import adapter from "axios-userscript-adapter";
-import { API_URL, JWT_KEY } from "./constants";
+import { API_URL } from "./constants";
 import { state } from "./state";
 import { Discussion } from "./types";
 const PATH_RE =
@@ -38,10 +38,12 @@ export async function getDiscussionData(): Promise<[number, Discussion[]]> {
   const result = PATH_RE.exec(window.location.href);
   if (!result) return undefined;
 
+  const cookie = await GM.getValue("cookie");
   const beatmapsetId = Number(result.groups.setid);
   const res = await get(API_URL + "/vote/mapset/" + beatmapsetId, {
+    withCredentials: true,
     headers: {
-      Authorization: "Bearer " + JWT_KEY,
+      Cookie: `authsession=${cookie}`,
     },
   });
   return [beatmapsetId, res.data.discussions];
@@ -85,6 +87,7 @@ export function generateCallback(
   shouldRevert: boolean
 ) {
   async function onVoteClick(score: number) {
+    const cookie = await GM.getValue("cookie");
     await post(
       API_URL + "/vote/" + discussionId,
       {
@@ -94,7 +97,7 @@ export function generateCallback(
       },
       {
         headers: {
-          Authorization: "Bearer " + JWT_KEY,
+          Cookie: `authsession=${cookie}`,
         },
       }
     );

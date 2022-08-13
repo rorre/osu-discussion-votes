@@ -78,7 +78,13 @@ function main() {
       state.lastUrl = currentUrl;
       drawVotes();
     }
-  }, 1000);
+  }, 100);
 }
 
+// @ts-ignore
+unsafeWindow.setCookie = (cookie: string) => {
+  GM.setValue("cookie", cookie);
+  alert("Authorized!");
+  document.close();
+};
 main();

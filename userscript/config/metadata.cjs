@@ -8,7 +8,8 @@ module.exports = {
   source: repository.url,
   // 'license': 'MIT',
   match: [
-    'https://osu.ppy.sh/*'
+    'https://osu.ppy.sh/*',
+    'http://127.0.0.1:8080/*'
   ],
   require: [
     `https://cdn.jsdelivr.net/npm/jquery@${dependencies.jquery}/dist/jquery.min.js`,
@@ -16,7 +17,9 @@ module.exports = {
     `https://cdn.jsdelivr.net/npm/axios-userscript-adapter@${dependencies['axios-userscript-adapter']}/dist/axiosGmxhrAdapter.min.js`,
   ],
   grant: [
-    'GM.xmlHttpRequest'
+    'GM.xmlHttpRequest',
+    'GM.setValue',
+    'GM.getValue'
   ],
   connect: [
     'httpbin.org',
