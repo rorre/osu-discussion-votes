@@ -88,6 +88,11 @@ export function generateCallback(
 ) {
   async function onVoteClick(score: number) {
     const cookie = await GM.getValue("cookie");
+    if (!cookie) {
+      alert("Please authorize on https://votes.rorre.xyz/auth before voting!");
+      return;
+    }
+
     await post(
       API_URL + "/vote/" + discussionId,
       {
