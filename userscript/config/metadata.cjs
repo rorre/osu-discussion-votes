@@ -12,7 +12,7 @@ module.exports = {
   author: author,
   source: repository.url,
   // 'license': 'MIT',
-  match: ["https://osu.ppy.sh/*", "https://votes.rorre.xyz/"],
+  match: ["https://osu.ppy.sh/*", "https://votes.rorre.xyz/*"],
   require: [
     `https://cdn.jsdelivr.net/npm/jquery@${dependencies.jquery}/dist/jquery.min.js`,
     `https://cdn.jsdelivr.net/npm/axios@${dependencies.axios}/dist/axios.min.js`,
