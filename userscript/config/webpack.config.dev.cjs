@@ -10,6 +10,7 @@ metadata.require.push(
   "file://" + path.resolve(__dirname, "../dist/index.debug.user.js")
 );
 metadata.match.push("http://127.0.0.1:8080/*");
+metadata.connect.push("127.0.0.1");
 
 const cfg = merge(webpackConfig, {
   entry: {

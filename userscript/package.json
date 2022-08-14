@@ -1,10 +1,10 @@
 {
-  "name": "webpack-userscript-template",
-  "description": "Build your UserScript with webpack",
-  "version": "0.0.0",
+  "name": "osu-discussion-votes",
+  "description": "Adds up/downvotes to osu! discussions",
+  "version": "0.0.1",
   "author": {
-    "name": "Trim21",
-    "email": "trim21me@gmail.com"
+    "name": "-Keitaro",
+    "email": "renrror@gmail.com"
   },
   "scripts": {
     "postversion": "git push --follow-tags",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Trim21/webpack-userscript-template"
+    "url": "https://github.com/rorre/osu-discussion-votes"
   },
   "private": true,
   "dependencies": {
