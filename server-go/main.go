@@ -21,7 +21,7 @@ import (
 func main() {
 	godotenv.Load()
 	models.ConnectDatabase()
-	routes.SetupConfig()
+	routes.SetupOAuthConfig()
 	store := gormsessions.NewStore(models.DB, true, []byte("secret"))
 
 	r := gin.Default()

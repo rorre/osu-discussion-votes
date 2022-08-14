@@ -55,7 +55,7 @@ type User struct {
 	ID uint `json:"id"`
 }
 
-func SetupConfig() {
+func SetupOAuthConfig() {
 	oauthCfg = &oauth2.Config{
 		ClientID:     os.Getenv("OSU_CLIENT_ID"),
 		ClientSecret: os.Getenv("OSU_CLIENT_SECRET"),
