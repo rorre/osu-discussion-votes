@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	gormsessions "github.com/gin-contrib/sessions/gorm"
 	"github.com/gin-gonic/gin"
@@ -22,11 +23,16 @@ func main() {
 	godotenv.Load()
 	models.ConnectDatabase()
 	routes.SetupOAuthConfig()
+
 	store := gormsessions.NewStore(models.DB, true, []byte("secret"))
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"https://osu.ppy.sh"}
+	config.AllowCredentials = true
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 	r.Use(sessions.Sessions("authsession", store))
+	r.Use(cors.New(config))
 
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "https://github.com/rorre/osu-discussion-votes")
