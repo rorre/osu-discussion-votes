@@ -3,6 +3,8 @@ const UserScriptMetaDataPlugin = require("userscript-metadata-webpack-plugin");
 
 const metadata = require("./metadata.cjs");
 const webpackConfig = require("./webpack.config.base.cjs");
+const updateURL =
+  "https://gist.github.com/rorre/3e2c94442d31a12e857fb02b2942529f/raw/modvotes.user.js";
 
 const cfg = merge(webpackConfig, {
   mode: "production",
@@ -16,7 +18,11 @@ const cfg = merge(webpackConfig, {
   },
   plugins: [
     new UserScriptMetaDataPlugin({
-      metadata,
+      metadata: {
+        ...metadata,
+        updateURL: updateURL,
+        downloadURL: updateURL,
+      },
     }),
   ],
 });
