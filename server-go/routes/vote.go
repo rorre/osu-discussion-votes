@@ -43,7 +43,11 @@ func VoteDiscussion(c *gin.Context) {
 	userId := v.(uint)
 
 	var vote models.Vote
-	models.DB.Where(&models.Vote{UserID: userId, DiscussionId: data.DiscussionId, MapsetId: data.BeatmapsetId}).FirstOrInit(&vote)
+	query := &models.Vote{UserID: userId, DiscussionId: data.DiscussionId, MapsetId: data.BeatmapsetId}
+	if err := models.DB.Where(query).FirstOrInit(&vote).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	vote.Vote = *data.Vote
 	models.DB.Save(&vote)
@@ -55,11 +59,18 @@ func FindMapset(c *gin.Context) {
 	userId := session.Get("user_id")
 	mapsetId := c.Param("mapset_id")
 
-	var votes []models.Vote
-	models.DB.Where("mapset_id = ?", mapsetId).Find(&votes)
+	rows, err := models.DB.Model(&models.Vote{}).Where("mapset_id = ?", mapsetId).Rows()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
+	defer rows.Close()
 	var discussions = make(map[uint]*DiscussionResponse)
-	for _, vote := range votes {
+	for rows.Next() {
+		var vote models.Vote
+		models.DB.ScanRows(rows, &vote)
+
 		if _, ok := discussions[vote.DiscussionId]; !ok {
 			discussions[vote.DiscussionId] = &DiscussionResponse{
 				ID:        vote.DiscussionId,
