@@ -6,6 +6,20 @@ import { Discussion } from "./types";
 const PATH_RE =
   /beatmapsets\/(?<setid>\d+)\/discussion(?:\/(?:[-\d]+)\/(?<tab>.+))?/;
 
+axios.interceptors.response.use(
+  function (response) {
+    return response;
+  },
+  function (error) {
+    if (error.response.status === 401) {
+      alert("Authorization failed, you will need to relogin.");
+      GM.openInTab(API_URL + "/auth", false);
+      return;
+    }
+    return Promise.reject(error);
+  }
+);
+
 export function get<T = any, R = AxiosResponse<T>>(
   url: string,
   config?: Exclude<Partial<AxiosRequestConfig>, "adapter">
@@ -89,7 +103,9 @@ export function generateCallback(
   async function onVoteClick(score: number) {
     const cookie = await GM.getValue("cookie");
     if (!cookie) {
-      alert("Please authorize on https://votes.rorre.xyz/auth before voting!");
+      if (confirm("Authorization required. Would you like to log in?")) {
+        GM.openInTab(API_URL + "/auth", false);
+      }
       return;
     }
 

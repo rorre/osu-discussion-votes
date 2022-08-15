@@ -18,7 +18,7 @@ module.exports = {
     `https://cdn.jsdelivr.net/npm/axios@${dependencies.axios}/dist/axios.min.js`,
     `https://cdn.jsdelivr.net/npm/axios-userscript-adapter@${dependencies["axios-userscript-adapter"]}/dist/axiosGmxhrAdapter.min.js`,
   ],
-  grant: ["GM.xmlHttpRequest", "GM.setValue", "GM.getValue"],
+  grant: ["GM.xmlHttpRequest", "GM.setValue", "GM.getValue", "GM.openInTab"],
   connect: ["votes.rorre.xyz"],
   "run-at": "document-end",
 };
