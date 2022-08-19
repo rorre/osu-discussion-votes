@@ -42,11 +42,14 @@ function drawRepliesVotes(element: HTMLElement) {
       replyId,
       state.beatmapsetId
     );
-    if (!element.dataset.voteInited) {
-      reply.firstElementChild.appendChild(replyElem);
-    } else {
+
+    if (reply.dataset.inited) {
       reply.firstElementChild.lastElementChild.replaceWith(replyElem);
+    } else {
+      reply.firstElementChild.appendChild(replyElem);
     }
+
+    reply.dataset.inited = "true";
   });
 }
 
@@ -91,6 +94,7 @@ function main() {
       drawVotes();
     }
     lastDiscussionCount = currentDiscussionCount;
+    lastRepliesCount = currentRepliesCount;
   }, 100);
 }
 
