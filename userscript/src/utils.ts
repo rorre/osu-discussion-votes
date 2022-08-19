@@ -83,6 +83,12 @@ export function getAllDiscussions() {
   return document.querySelectorAll<HTMLElement>(".beatmap-discussion");
 }
 
+export function getAllReplies() {
+  return document.querySelectorAll<HTMLElement>(
+    ".beatmap-discussion-post--reply:not(.beatmap-discussion-post--new-reply)"
+  );
+}
+
 export function findById(arr: Discussion[], id: number): Discussion {
   for (const discussion of arr) {
     if (discussion.id == id) return discussion;

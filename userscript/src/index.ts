@@ -5,6 +5,7 @@ import {
   getDiscussionData,
   generateCallback,
   getBeatmapSetId,
+  getAllReplies,
 } from "./utils";
 import { DownvoteButton, ReplyVoteArea } from "./elements";
 import { Discussion } from "./types";
@@ -64,17 +65,25 @@ function drawVotes() {
 
 function main() {
   let lastDiscussionCount = 0;
+  let lastRepliesCount = 0;
 
   setInterval(async () => {
     if (!isDiscussionPage()) return;
 
     let currentUrl = window.location.href;
     let currentSetId = getBeatmapSetId();
-    if (currentSetId != state.lastMapsetId) state.shouldFetch = true;
-    if (currentUrl != state.lastUrl) state.shouldFetch = true;
-
     let currentDiscussionCount = getAllDiscussions().length;
-    if (state.shouldFetch || lastDiscussionCount !== currentDiscussionCount) {
+    let currentRepliesCount = getAllReplies().length;
+
+    if (
+      currentSetId != state.lastMapsetId ||
+      currentUrl != state.lastUrl ||
+      lastDiscussionCount !== currentDiscussionCount ||
+      lastRepliesCount !== currentRepliesCount
+    )
+      state.shouldFetch = true;
+
+    if (state.shouldFetch) {
       [state.beatmapsetId, state.discussionsData] = await getDiscussionData();
       state.shouldFetch = false;
       state.lastMapsetId = currentSetId;
